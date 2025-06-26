@@ -24,11 +24,14 @@ export const registerFCM = async (API_URL) => {
       console.warn("❌ No FCM token retrieved");
     }
 
-    // Foreground message handling
     onMessage(messaging, (payload) => {
       console.log("🟡 Message received in foreground:", payload);
-      alert(`${payload.notification?.title}\n${payload.notification?.body}`);
-    });
+    
+      const title = payload?.notification?.title || payload?.data?.title || "CRM Alert";
+      const body = payload?.notification?.body || payload?.data?.body || "You have a meeting.";
+    
+      alert(`${title}\n${body}`);
+    });    
 
   } catch (err) {
     console.error("🔥 FCM registration failed:", err.message);

@@ -29,6 +29,6 @@ messaging.onBackgroundMessage(function(payload) {
 
   self.registration.showNotification(title, {
     body,
-    icon: "/logo192.png", // Optional: put icon in public folder
+    icon: "/logo192.png",
   });
 });
