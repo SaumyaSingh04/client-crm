@@ -1,7 +1,8 @@
-// src/utils/registerFCM.js
-import { messaging, getToken, onMessage } from "../firebase";
+// utils/registerFCM.js
+import { getToken, onMessage } from "firebase/messaging";
+import { messaging } from "../firebase";
 
-const VAPID_KEY = "BCZepWDtYcW12x9Inm3B-wkLuNPikIL8ouqTkfYI1BTjlHbv-pqhD-lKzXmKfXAdfYuGxsAqeVbPk31DfCBU16Q";
+const VAPID_KEY = "BOnE-4YZrJGAijICE9aOGB89f78TWYk_yxGlgbQKJVU4fQjgEiTuLJyUlSsGUD9zWgkecsnv_Ug3a76tXUNrl4g";
 
 export const registerFCM = async (API_URL) => {
   try {
@@ -11,10 +12,17 @@ export const registerFCM = async (API_URL) => {
       return;
     }
 
-    const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    // ✅ Register the service worker manually
+    const registration = await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+
+    // ✅ Pass the registered SW here
+    const token = await getToken(messaging, {
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: registration,
+    });
+
     if (token) {
       console.log("📱 FCM token:", token);
-
       await fetch(`${API_URL}/api/push/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,6 +32,7 @@ export const registerFCM = async (API_URL) => {
       console.warn("❌ No FCM token retrieved");
     }
 
+    // Foreground message handler
     onMessage(messaging, (payload) => {
       console.log("🟡 Message received in foreground:", payload);
     
@@ -37,3 +46,4 @@ export const registerFCM = async (API_URL) => {
     console.error("🔥 FCM registration failed:", err.message);
   }
 };
+

@@ -1,18 +1,17 @@
-// src/firebase.js
+// firebase.js
 import { initializeApp } from "firebase/app";
-import { getMessaging, getToken, onMessage } from "firebase/messaging";
+import { getMessaging } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyA6LM4YVdb27CSCYEG6RCOJQ9FdCxTFMuA",
-  authDomain: "crms-7ec70.firebaseapp.com",
-  projectId: "crms-7ec70",
-  storageBucket: "crms-7ec70.appspot.com",
-  messagingSenderId: "823887970139",
-  appId: "1:823887970139:web:e58977503889336e83e47e",
-  measurementId: "G-KNF0BC5JH2"
+  apiKey: "AIzaSyBXpJ1dv_3SDq9TVa-_hoSoT4CFteNJsBM",
+  authDomain: "hotel-buddha-avenue.firebaseapp.com",
+  projectId: "hotel-buddha-avenue",
+  storageBucket: "hotel-buddha-avenue.appspot.com",
+  messagingSenderId: "20353209537",
+  appId: "1:20353209537:web:a6f748af3d97def3393040",
 };
 
-const firebaseApp = initializeApp(firebaseConfig);
-const messaging = getMessaging(firebaseApp);
+const app = initializeApp(firebaseConfig);
+const messaging = getMessaging(app);
 
-export { messaging, getToken, onMessage };
+export { messaging }; // ✅ only export messaging
