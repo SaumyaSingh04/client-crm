@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 const AppContext = createContext();
 
 const API_URL = import.meta.env.PROD 
-  ? "https://server-crm-production-bcde.up.railway.app"
+  ? "https://server-crm.vercel.app"
   : "http://localhost:5000";
 
 export function AppProvider({ children }) {
