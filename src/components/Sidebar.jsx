@@ -88,7 +88,11 @@ function Sidebar() {
                 </ul>
               )}
             </li>
-
+            <li>
+              <Link to="/invoices" className="block py-2 px-4 rounded hover:bg-gray-700">
+                Invoice Management
+              </Link>
+            </li>
             <li>
               <Link to="/settings" className="block py-2 px-4 rounded hover:bg-gray-700">
                 Settings

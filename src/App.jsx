@@ -20,7 +20,9 @@ import ContractManagement from "./pages/ContractManagement";
 import EditContract from "./pages/EditContract";
 import AddContract from "./pages/AddContract";
 import PolicyAcceptance from "./pages/PolicyManagement";
-
+import InvoiceManagement from "./pages/InvoiceManagement";
+import AddInvoice from "./pages/AddInvoice";
+import CreateInvoice from "./pages/CreateInvoice";
 // 🔔 This component handles FCM registration using context
 function PushManagerInitializer() {
   const { API_URL } = useAppContext();
@@ -66,6 +68,10 @@ function AppRoutes() {
         <Route path="contracts/create" element={<EditContract />} />
         <Route path="contracts/create/:id" element={<AddContract />} />
         <Route path="contracts/edit/:id" element={<EditContract />} />
+        <Route path="invoices" element={<InvoiceManagement />} />
+        <Route path="invoices/add/:id" element={<AddInvoice />} />
+        <Route path="invoices/create/:id" element={<CreateInvoice />} />
+
 
         {/* Policy */}
         <Route path="employee/policies" element={<PolicyAcceptance />} />
