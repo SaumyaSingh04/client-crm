@@ -69,8 +69,9 @@ function AppRoutes() {
         <Route path="contracts/create/:id" element={<AddContract />} />
         <Route path="contracts/edit/:id" element={<EditContract />} />
         <Route path="invoices" element={<InvoiceManagement />} />
-        <Route path="invoices/add/:id" element={<AddInvoice />} />
-        <Route path="invoices/create/:id" element={<CreateInvoice />} />
+<Route path="invoices/add" element={<AddInvoice />} />
+<Route path="/invoices/edit/:id" element={<AddInvoice />} />
+<Route path="invoices/view/:id" element={<CreateInvoice />} />
 
 
         {/* Policy */}

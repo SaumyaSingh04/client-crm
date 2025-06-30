@@ -1,12 +1,11 @@
-// src/pages/InvoiceNewForm.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 
-const InvoiceNewForm = () => {
+const AddInvoice = () => {
   const { id } = useParams();
-  const { baseUrl } = useAppContext();
+  const { API_URL } = useAppContext();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -22,7 +21,7 @@ const InvoiceNewForm = () => {
     customerAadhar: "",
     productDetails: [],
     amountDetails: {
-      gstPercentage: 9,
+      gstPercentage: 18,
       discountOnTotal: 0,
       totalAmount: 0,
     },
@@ -31,7 +30,7 @@ const InvoiceNewForm = () => {
   const [rows, setRows] = useState([
     {
       description: "",
-      unit: "",
+      unit: "Unit",
       quantity: "",
       price: "",
       discountPercentage: "",
@@ -40,21 +39,56 @@ const InvoiceNewForm = () => {
   ]);
 
   useEffect(() => {
-    if (id) {
-      axios.get(`${baseUrl}/invoices/mono/${id}`).then((res) => {
-        const data = res.data.data;
-        setFormData(data);
-        setRows(data.productDetails);
-      });
-    } else {
-      axios.get(`${baseUrl}/invoices/next-invoice-number`).then((res) => {
-        setFormData((prev) => ({
-          ...prev,
-          invoiceNumber: res.data.nextInvoiceNumber,
-        }));
-      });
-    }
-  }, [id, baseUrl]);
+    const fetchData = async () => {
+      try {
+        if (id) {
+          const res = await axios.get(`${API_URL}/api/invoices/mono/${id}`);
+          const data = res.data.data;
+          if (!data) throw new Error("Invoice not found");
+  
+          // Format ISO date to yyyy-mm-dd
+          const formatDate = (isoDate) =>
+            isoDate ? new Date(isoDate).toISOString().split("T")[0] : "";
+  
+          setFormData((prev) => ({
+            ...prev,
+            ...data,
+            invoiceDate: formatDate(data.invoiceDate),
+            dueDate: formatDate(data.dueDate),
+          }));
+          setRows(data.productDetails || []);
+        } else {
+          const res = await axios.get(`${API_URL}/api/invoices/next-invoice-number`);
+          setFormData((prev) => ({
+            ...prev,
+            invoiceNumber: res.data.nextInvoiceNumber,
+          }));
+        }
+      } catch (err) {
+        console.error("Invoice fetch error:", err);
+        alert("Failed to fetch invoice.");
+      }
+    };
+  
+    fetchData();
+  }, [id, API_URL]);
+  
+  // ✅ Auto-calculate totalAmount when rows, gst or discount changes
+  useEffect(() => {
+    const baseAmount = rows.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
+    const gst = parseFloat(formData.amountDetails.gstPercentage || 0);
+    const discount = parseFloat(formData.amountDetails.discountOnTotal || 0);
+    const total = baseAmount * (1 + gst / 100) - discount;
+  
+    setFormData((prev) => ({
+      ...prev,
+      amountDetails: {
+        ...prev.amountDetails,
+        totalAmount: total.toFixed(2),
+      },
+    }));
+  }, [rows, formData.amountDetails.gstPercentage, formData.amountDetails.discountOnTotal]);
+  
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -63,10 +97,11 @@ const InvoiceNewForm = () => {
   const handleRowChange = (index, field, value) => {
     const updated = [...rows];
     updated[index][field] = value;
-    const quantity = parseFloat(updated[index].quantity) || 0;
+
+    const qty = parseFloat(updated[index].quantity) || 0;
     const price = parseFloat(updated[index].price) || 0;
     const discount = parseFloat(updated[index].discountPercentage) || 0;
-    const amount = price * quantity * (1 - discount / 100);
+    const amount = price * qty * (1 - discount / 100);
     updated[index].amount = amount.toFixed(2);
     setRows(updated);
   };
@@ -76,7 +111,7 @@ const InvoiceNewForm = () => {
       ...rows,
       {
         description: "",
-        unit: "",
+        unit: "Unit",
         quantity: "",
         price: "",
         discountPercentage: "",
@@ -94,73 +129,208 @@ const InvoiceNewForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const baseAmount = rows.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
-    const gstRate = parseFloat(formData.amountDetails.gstPercentage) || 0;
-    const discount = parseFloat(formData.amountDetails.discountOnTotal) || 0;
-    const totalAmount = baseAmount * (1 + gstRate / 100) - discount;
+    // const baseAmount = rows.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
+    // const gstRate = parseFloat(formData.amountDetails.gstPercentage) || 0;
+    // const discount = parseFloat(formData.amountDetails.discountOnTotal) || 0;
+    // const totalAmount = baseAmount * (1 + gstRate / 100) - discount;
 
     const payload = {
       ...formData,
       productDetails: rows,
       amountDetails: {
         ...formData.amountDetails,
-        totalAmount: totalAmount.toFixed(2),
+        totalAmount: parseFloat(totalAmount).toFixed(2),
       },
-    };
+    };    
 
-    if (id) {
-      await axios.put(`${baseUrl}/invoices/update/${id}`, payload);
-    } else {
-      await axios.post(`${baseUrl}/invoices/create`, payload);
+    try {
+      if (id) {
+        await axios.put(`${API_URL}/api/invoices/update/${id}`, payload);
+      } else {
+        await axios.post(`${API_URL}/api/invoices/create`, payload);
+      }
+      navigate("/invoices");
+    } catch (err) {
+      console.error("Submit failed:", err);
+      alert("Failed to save invoice.");
     }
-
-    navigate("/InvoiceNewList");
   };
 
+  const gstRate = parseFloat(formData.amountDetails.gstPercentage || 0);
+  const cgst = (gstRate / 2).toFixed(2);
+  const sgst = (gstRate / 2).toFixed(2);
+  const totalAmount = formData.amountDetails.totalAmount || 0;
+
   return (
-    <form onSubmit={handleSubmit} className="p-6 bg-white shadow rounded-xl space-y-4">
-      <h2 className="text-xl font-bold">{id ? "Update" : "Create"} Invoice</h2>
+    <div className="p-6">
+      <div className="flex items-center mb-6">
+        <button
+          onClick={() => navigate("/invoices")}
+          className="mr-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+        </button>
+        <h2 className="text-2xl font-bold">
+          {id ? "Update Invoice" : "Add New Invoice"}
+        </h2>
+      </div>
 
-      {/* Basic Fields */}
-      <input name="customerName" placeholder="Customer Name" value={formData.customerName} onChange={handleChange} />
-      <input name="customerGST" placeholder="Customer GST" value={formData.customerGST} onChange={handleChange} />
-      <input name="invoiceDate" type="date" value={formData.invoiceDate} onChange={handleChange} />
-      <input name="dueDate" type="date" value={formData.dueDate} onChange={handleChange} />
-      <input name="customerAddress" placeholder="Address" value={formData.customerAddress} onChange={handleChange} />
-      <input name="customerPhone" placeholder="Phone" value={formData.customerPhone} onChange={handleChange} />
-      <input name="customerEmail" placeholder="Email" value={formData.customerEmail} onChange={handleChange} />
-      <input name="customerAadhar" placeholder="Aadhar" value={formData.customerAadhar} onChange={handleChange} />
-
-      {/* Product Table */}
-      <table className="w-full border mt-4">
-        <thead>
-          <tr>
-            <th>Description</th><th>Unit</th><th>Qty</th><th>Price</th><th>Discount %</th><th>Amount</th><th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row, i) => (
-            <tr key={i}>
-              <td><input value={row.description} onChange={(e) => handleRowChange(i, "description", e.target.value)} /></td>
-              <td><input value={row.unit} onChange={(e) => handleRowChange(i, "unit", e.target.value)} /></td>
-              <td><input type="number" value={row.quantity} onChange={(e) => handleRowChange(i, "quantity", e.target.value)} /></td>
-              <td><input type="number" value={row.price} onChange={(e) => handleRowChange(i, "price", e.target.value)} /></td>
-              <td><input type="number" value={row.discountPercentage} onChange={(e) => handleRowChange(i, "discountPercentage", e.target.value)} /></td>
-              <td>{row.amount}</td>
-              <td><button type="button" onClick={() => removeRow(i)}>Remove</button></td>
-            </tr>
+      <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {[
+            ["Invoice Date", "invoiceDate", "date"],
+            ["Due Date", "dueDate", "date"],
+            ["Customer Name", "customerName", "text"],
+            ["Invoice Number", "invoiceNumber", "text"],
+            ["Customer Address", "customerAddress", "text"],
+            ["Customer Phone", "customerPhone", "tel"],
+            ["Customer Email", "customerEmail", "email"],
+            ["Dispatch Through", "dispatchThrough", "text"],
+            ["Customer GSTIN", "customerGST", "text"],
+            ["Customer Aadhar", "customerAadhar", "text"],
+          ].map(([label, name, type]) => (
+            <div key={name}>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                {label}
+              </label>
+              <input
+                type={type}
+                name={name}
+                value={formData[name]}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                required
+              />
+            </div>
           ))}
-        </tbody>
-      </table>
-      <button type="button" onClick={addRow}>+ Add Item</button>
+        </div>
 
-      {/* Amount Section */}
-      <input type="number" placeholder="GST %" value={formData.amountDetails.gstPercentage} onChange={(e) => setFormData({ ...formData, amountDetails: { ...formData.amountDetails, gstPercentage: e.target.value } })} />
-      <input type="number" placeholder="Discount on Total" value={formData.amountDetails.discountOnTotal} onChange={(e) => setFormData({ ...formData, amountDetails: { ...formData.amountDetails, discountOnTotal: e.target.value } })} />
+        <h3 className="text-md font-semibold mb-2 text-blue-600 mt-8">Product Details</h3>
+        <div className="overflow-x-auto mb-4">
+          <table className="w-full table-auto border text-sm text-left">
+            <thead className="bg-gray-100 dark:bg-gray-700 dark:text-gray-300">
+              <tr>
+                {["Description", "Unit", "Qty", "Price", "Discount %", "Amount", "Action"].map((head) => (
+                  <th key={head} className="border px-3 py-2">{head}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="dark:bg-gray-800">
+              {rows.map((row, i) => (
+                <tr key={i}>
+                  <td className="border px-3 py-2">
+                    <input
+                      type="text"
+                      value={row.description}
+                      onChange={(e) => handleRowChange(i, "description", e.target.value)}
+                      className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    />
+                  </td>
+                  <td className="border px-3 py-2">
+                    <select
+                      value={row.unit}
+                      onChange={(e) => handleRowChange(i, "unit", e.target.value)}
+                      className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    >
+                      {["Unit", "Pieces", "Kilograms", "Liters", "Pack", "Dozen"].map((u) => (
+                        <option key={u}>{u}</option>
+                      ))}
+                    </select>
+                  </td>
+                  {["quantity", "price", "discountPercentage"].map((field) => (
+                    <td key={field} className="border px-3 py-2">
+                      <input
+                        type="number"
+                        value={row[field]}
+                        onChange={(e) => handleRowChange(i, field, e.target.value)}
+                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      />
+                    </td>
+                  ))}
+                  <td className="border px-3 py-2 text-gray-800 dark:text-white">₹{row.amount}</td>
+                  <td className="border px-3 py-2 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeRow(i)}
+                      className="text-red-600 hover:text-red-800 font-medium"
+                    >
+                      Remove
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-      <button type="submit">{id ? "Update" : "Create"} Invoice</button>
-    </form>
+        <button
+          type="button"
+          onClick={addRow}
+          className="mt-3 bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-white"
+        >
+          + Add Item
+        </button>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">GST Percentage</label>
+            <input
+              type="number"
+              value={formData.amountDetails.gstPercentage}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  amountDetails: { ...formData.amountDetails, gstPercentage: e.target.value },
+                })
+              }
+              className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+<p className="text-xs mt-1 text-gray-500">CGST: {cgst}%, SGST: {sgst}%</p>
+</div>
+
+          {/* <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Discount on Total (₹)
+            </label>
+            <input
+              type="number"
+              value={formData.amountDetails.discountOnTotal}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  amountDetails: { ...formData.amountDetails, discountOnTotal: e.target.value },
+                })
+              }
+              className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+            />
+          </div> */}
+        </div>
+
+        <div className="mt-6 text-right text-lg font-semibold dark:text-white">
+          Total Amount: ₹{totalAmount}
+        </div>
+
+        <div className="mt-6 flex justify-end">
+        <button
+              type="button"
+              onClick={() => navigate("/invoices")}
+              className="px-4 py-2 mr-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          <button
+            type="submit"
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700"
+          >
+            {id ? "Update Invoice" : "Create Invoice"}
+          </button>
+        </div>
+      </form>
+    </div>
   );
 };
 
-export default InvoiceNewForm;
+export default AddInvoice;
