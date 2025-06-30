@@ -38,9 +38,11 @@ const CreateInvoice = () => {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
 
-  const totalAmount = Number(invoice?.amountDetails?.totalAmount || 0);
-  const cgstAmount = (totalAmount * 0.09).toFixed(2);
-  const sgstAmount = (totalAmount * 0.09).toFixed(2);
+      const gstRate = Number(invoice?.amountDetails?.gstPercentage || 0);
+      const totalAmount = Number(invoice?.amountDetails?.totalAmount || 0);
+      const baseAmount = totalAmount / (1 + gstRate / 100);
+      const cgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
+      const sgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);      
   const totalQty = invoice?.productDetails?.reduce(
     (acc, p) => acc + Number(p.quantity || 0),
     0
@@ -104,28 +106,36 @@ const CreateInvoice = () => {
               </div>
             </div>
             <div className="grid grid-cols-2 border border-black text-xs sm:text-sm font-semibold text-gray-800">
-              <div className="border-t-0 border-black p-2">
-                <p>Invoice #:</p>
-                <p className="font-bold">{invoice.invoiceNumber}</p>
-              </div>
-              <div className="border-black p-2">
-                <p>Invoice Date:</p>
-                <p className="font-bold">{invoice.invoiceDate.split("T")[0]}</p>
-              </div>
-              <div className="border-b-0 p-2">
-                <p>Place of Supply:</p>
-                <p className="font-bold">{invoice.customerAddress}</p>
-              </div>
-              <div className="border-b-0 border-r-0 p-2">
-                <p>Due Date:</p>
-                <p className="font-bold">{new Date(invoice.dueDate).toLocaleDateString()}</p>
-              </div>
-            </div>
+  {/* Invoice Number */}
+  <div className="border-r border-b border-black p-2">
+    <p>Invoice #:</p>
+    <p className="font-bold">{invoice.invoiceNumber}</p>
+  </div>
+
+  {/* Invoice Date */}
+  <div className="border-b border-black p-2">
+    <p>Invoice Date:</p>
+    <p className="font-bold">{invoice.invoiceDate.split("T")[0]}</p>
+  </div>
+
+  {/* Place of Supply */}
+  <div className="border-r border-black p-2">
+    <p>Place of Supply:</p>
+    <p className="font-bold">{invoice.customerAddress}</p>
+  </div>
+
+  {/* Due Date */}
+  <div className="p-2">
+    <p>Due Date:</p>
+    <p className="font-bold">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+  </div>
+</div>
+
           </div>
 
           {/* Customer Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <div className="border-r-2 border-black p-2 text-gray-800">
+            <div className=" border-black p-2 text-gray-800">
               <p><strong>Customer Details:</strong></p>
               <p>GSTIN: {invoice.customerGST}</p>
               <p>Billing Address: {invoice.customerAddress}</p>
@@ -166,9 +176,9 @@ const CreateInvoice = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 border-t-2 border-black p-1 text-gray-800">
             <div />
             <div className="text-center">
-              <p><strong>Taxable Amount: ₹</strong> {totalAmount}</p>
-              <p><strong>CGST 9.0%: ₹</strong> {cgstAmount}</p>
-              <p><strong>SGST 9.0%: ₹</strong> {sgstAmount}</p>
+            <p><strong>Taxable Amount: ₹</strong> {baseAmount.toFixed(2)}</p>
+<p><strong>CGST {gstRate / 2}%: ₹</strong> {cgstAmount}</p>
+<p><strong>SGST {gstRate / 2}%: ₹</strong> {sgstAmount}</p>
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 border-t-2 border-black text-gray-800">

@@ -1,3 +1,4 @@
+// src/pages/AddInvoice.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate, useParams } from "react-router-dom";
@@ -45,11 +46,10 @@ const AddInvoice = () => {
           const res = await axios.get(`${API_URL}/api/invoices/mono/${id}`);
           const data = res.data.data;
           if (!data) throw new Error("Invoice not found");
-  
-          // Format ISO date to yyyy-mm-dd
+
           const formatDate = (isoDate) =>
             isoDate ? new Date(isoDate).toISOString().split("T")[0] : "";
-  
+
           setFormData((prev) => ({
             ...prev,
             ...data,
@@ -69,26 +69,47 @@ const AddInvoice = () => {
         alert("Failed to fetch invoice.");
       }
     };
-  
+
     fetchData();
   }, [id, API_URL]);
-  
+
   // ✅ Auto-calculate totalAmount when rows, gst or discount changes
   useEffect(() => {
-    const baseAmount = rows.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
-    const gst = parseFloat(formData.amountDetails.gstPercentage || 0);
-    const discount = parseFloat(formData.amountDetails.discountOnTotal || 0);
-    const total = baseAmount * (1 + gst / 100) - discount;
-  
+    // 1) sum all line amounts (includes line‑level discounts)
+    const baseAmount = rows.reduce(
+      (acc, item) => acc + parseFloat(item.amount || 0),
+      0
+    );
+
+    // 2) percentages from formData
+    const gstPct = parseFloat(formData.amountDetails.gstPercentage || 0);
+    const discPct = parseFloat(formData.amountDetails.discountOnTotal || 0);
+
+    // 3) apply global discount% to the base, then round to paise
+    const discountedBase = parseFloat(
+      (baseAmount * (1 - discPct / 100)).toFixed(2)
+    );
+
+    // 4) compute GST amount on that discounted base, round to paise
+    const gstAmount = parseFloat(
+      (discountedBase * (gstPct / 100)).toFixed(2)
+    );
+
+    // 5) total = discounted base + GST amount, rounded to paise
+    const total = parseFloat((discountedBase + gstAmount).toFixed(2));
+
     setFormData((prev) => ({
       ...prev,
       amountDetails: {
         ...prev.amountDetails,
-        totalAmount: total.toFixed(2),
+        totalAmount: total,
       },
     }));
-  }, [rows, formData.amountDetails.gstPercentage, formData.amountDetails.discountOnTotal]);
-  
+  }, [
+    rows,
+    formData.amountDetails.gstPercentage,
+    formData.amountDetails.discountOnTotal,
+  ]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -129,19 +150,14 @@ const AddInvoice = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // const baseAmount = rows.reduce((acc, item) => acc + parseFloat(item.amount || 0), 0);
-    // const gstRate = parseFloat(formData.amountDetails.gstPercentage) || 0;
-    // const discount = parseFloat(formData.amountDetails.discountOnTotal) || 0;
-    // const totalAmount = baseAmount * (1 + gstRate / 100) - discount;
-
     const payload = {
       ...formData,
       productDetails: rows,
       amountDetails: {
         ...formData.amountDetails,
-        totalAmount: parseFloat(totalAmount).toFixed(2),
+        totalAmount: parseFloat(formData.amountDetails.totalAmount).toFixed(2),
       },
-    };    
+    };
 
     try {
       if (id) {
@@ -225,8 +241,7 @@ const AddInvoice = () => {
                     <input
                       type="text"
                       value={row.description}
-                      onChange={(e) => handleRowChange(i, "description", e.target.value)}
-                      className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      onChange={(e) => handleRowChange(i, "description", e.target.value)}                      className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                     />
                   </td>
                   <td className="border px-3 py-2">
@@ -245,8 +260,7 @@ const AddInvoice = () => {
                       <input
                         type="number"
                         value={row[field]}
-                        onChange={(e) => handleRowChange(i, field, e.target.value)}
-                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        onChange={(e) => handleRowChange(i, field, e.target.value)}                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                       />
                     </td>
                   ))}
@@ -288,25 +302,8 @@ const AddInvoice = () => {
               }
               className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
             />
-<p className="text-xs mt-1 text-gray-500">CGST: {cgst}%, SGST: {sgst}%</p>
-</div>
-
-          {/* <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Discount on Total (₹)
-            </label>
-            <input
-              type="number"
-              value={formData.amountDetails.discountOnTotal}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  amountDetails: { ...formData.amountDetails, discountOnTotal: e.target.value },
-                })
-              }
-              className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-            />
-          </div> */}
+            <p className="text-xs mt-1 text-gray-500">CGST: {cgst}%, SGST: {sgst}%</p>
+          </div>
         </div>
 
         <div className="mt-6 text-right text-lg font-semibold dark:text-white">
@@ -314,13 +311,13 @@ const AddInvoice = () => {
         </div>
 
         <div className="mt-6 flex justify-end">
-        <button
-              type="button"
-              onClick={() => navigate("/invoices")}
-              className="px-4 py-2 mr-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              Cancel
-            </button>
+          <button
+            type="button"
+            onClick={() => navigate("/invoices")}
+            className="px-4 py-2 mr-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            Cancel
+          </button>
           <button
             type="submit"
             className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gray-800 hover:bg-gray-700"
