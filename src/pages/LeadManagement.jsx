@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import axios from "axios";
+import Loader from "../components/Loader";
 
 function LeadManagement() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
   const [leads, setLeads] = useState([]);
   const { navigate, API_URL } = useAppContext();
 
@@ -14,12 +16,13 @@ function LeadManagement() {
         setLeads(response.data);
       } catch (error) {
         console.log(error);
+      } finally {
+        setLoading(false);
       }
     };
     fetchLeads();
-  }, []);
+  }, [API_URL]);
 
-  // Filter leads based on search term
   const filteredLeads = leads.filter(
     (lead) =>
       lead.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -67,98 +70,100 @@ function LeadManagement() {
         </button>
       </div>
 
-      {/* Lead Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md w-full">
-        {filteredLeads.length > 0 ? (
-          <div className="overflow-x-auto w-full">
-            <table className="min-w-full table-auto">
-              <thead className="bg-gray-100 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Contact
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Address
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Follow Up
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
-                    Interested
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Meeting Date
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
-                {filteredLeads.map((lead) => (
-                  <tr
-                    key={lead._id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                    onClick={() => navigate(`/leads/add?id=${lead._id}`)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">{lead.name}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>{lead.number}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {lead.email}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 max-w-xs truncate">
-                      {lead.address}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                        ${
-                          lead.status === "New"
-                            ? "bg-green-100 text-green-800"
-                            : lead.status === "In Progress"
-                            ? "bg-blue-100 text-blue-800"
-                            : lead.status === "Contacted"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-purple-100 text-purple-800"
-                        }`}
-                      >
-                        {lead.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div>{lead.followUpDate}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
-                        {lead.followUpStatus}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {lead.isInterested ? (
-                        <span className="text-green-600">Yes</span>
-                      ) : (
-                        <span className="text-red-600">No</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {lead.meetingDate || "Not Scheduled"}
-                    </td>
+      {/* Loader or Lead Table */}
+      {loading ? (
+        <Loader message="Fetching leads..." />
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md w-full">
+          {filteredLeads.length > 0 ? (
+            <div className="overflow-x-auto w-full">
+              <table className="min-w-full table-auto">
+                <thead className="bg-gray-100 dark:bg-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Name
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Address
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Follow Up
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider w-24">
+                      Interested
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                      Meeting Date
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-center py-8">
-            <p className="text-gray-500">
-              No leads found matching your search.
-            </p>
-          </div>
-        )}
-      </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-600">
+                  {filteredLeads.map((lead) => (
+                    <tr
+                      key={lead._id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+                      onClick={() => navigate(`/leads/add?id=${lead._id}`)}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap">{lead.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>{lead.number}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {lead.email}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 max-w-xs truncate">
+                        {lead.address}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                          ${
+                            lead.status === "New"
+                              ? "bg-green-100 text-green-800"
+                              : lead.status === "In Progress"
+                              ? "bg-blue-100 text-blue-800"
+                              : lead.status === "Contacted"
+                              ? "bg-yellow-100 text-yellow-800"
+                              : "bg-purple-100 text-purple-800"
+                          }`}
+                        >
+                          {lead.status}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div>{lead.followUpDate}</div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {lead.followUpStatus}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {lead.isInterested ? (
+                          <span className="text-green-600">Yes</span>
+                        ) : (
+                          <span className="text-red-600">No</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {lead.meetingDate || "Not Scheduled"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No leads found matching your search.</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

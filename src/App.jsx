@@ -19,7 +19,7 @@ import AddEmployee from "./pages/AddEmployee";
 import ContractManagement from "./pages/ContractManagement";
 import EditContract from "./pages/EditContract";
 import AddContract from "./pages/AddContract";
-import PolicyAcceptance from "./pages/PolicyManagement";
+// import PolicyAcceptance from "./pages/PolicyManagement";
 import InvoiceManagement from "./pages/InvoiceManagement";
 import AddInvoice from "./pages/AddInvoice";
 import CreateInvoice from "./pages/CreateInvoice";
@@ -75,7 +75,7 @@ function AppRoutes() {
 
 
         {/* Policy */}
-        <Route path="employee/policies" element={<PolicyAcceptance />} />
+        {/* <Route path="employee/policies" element={<PolicyAcceptance />} /> */}
       </Route>
     </Routes>
   );

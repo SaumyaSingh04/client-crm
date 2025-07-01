@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import axios from "axios";
-
+import Loader from "../components/Loader";
 function ProjectManagement() {
   const [selectedProject, setSelectedProject] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -196,9 +196,7 @@ function ProjectManagement() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500">Loading projects...</p>
-          </div>
+          <Loader message="Fetching projects..." />
         ) : error ? (
           <div className="text-center py-8">
             <p className="text-red-500">{error}</p>
@@ -266,11 +264,9 @@ function ProjectManagement() {
               </div>
             ))}
           </div>
-        ) : (
+         ) : (
           <div className="text-center py-8">
-            <p className="text-gray-500">
-              No projects found matching your search.
-            </p>
+            <p className="text-gray-500">No projects found matching your search.</p>
           </div>
         )}
       </div>
