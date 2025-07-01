@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import { toWords } from "number-to-words";
 import { useReactToPrint } from "react-to-print";
 import { useAppContext } from "../context/AppContext";
+import Loader from "../components/Loader";
 
 const CreateInvoice = () => {
   const { id } = useParams();
@@ -67,7 +68,7 @@ const CreateInvoice = () => {
     `,
   });
 
-  if (loading) return <div>Loading invoice...</div>;
+  if (loading) return <Loader />;
   if (error) return <div>{error}</div>;
   if (!invoice) return <div>No invoice data found</div>;
 
