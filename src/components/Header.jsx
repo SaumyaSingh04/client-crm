@@ -11,6 +11,7 @@ function Header() {
           <button
             onClick={toggleSidebar}
             className="mr-4 md:hidden text-gray-600 dark:text-gray-200"
+            title="Toggle Sidebar"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -31,14 +32,17 @@ function Header() {
         </div>
 
         <div className="flex items-center space-x-4">
+          {/* Toggle Dark Mode Button */}
           <button
             onClick={toggleDarkMode}
             className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
           >
             {darkMode ? (
+              // Sun icon for light mode
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
+                className="h-5 w-5 text-yellow-400"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -51,9 +55,10 @@ function Header() {
                 />
               </svg>
             ) : (
+              // Moon icon for dark mode
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5"
+                className="h-5 w-5 text-gray-700 dark:text-gray-200"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -68,6 +73,7 @@ function Header() {
             )}
           </button>
 
+          {/* User Info */}
           {currentUser ? (
             <div className="flex items-center">
               <span className="mr-2">{currentUser.name}</span>

@@ -14,9 +14,11 @@ export function AppProvider({ children }) {
   const [darkMode, setDarkMode] = useState(false);
   const navigate = useNavigate();
 
-  // Check for saved user on initial load
+  // Check for saved user and theme on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
+    const savedDarkMode = localStorage.getItem("darkMode");
+
     if (savedUser) {
       try {
         setCurrentUser(JSON.parse(savedUser));
@@ -24,7 +26,21 @@ export function AppProvider({ children }) {
         localStorage.removeItem("user");
       }
     }
+
+    if (savedDarkMode !== null) {
+      setDarkMode(savedDarkMode === "true");
+    }
   }, []);
+
+  // Apply or remove dark class on <html>
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("darkMode", darkMode);
+  }, [darkMode]);
 
   // Functions to manipulate state
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -39,6 +55,7 @@ export function AppProvider({ children }) {
     setCurrentUser(null);
     localStorage.removeItem("user");
   };
+
   // Values to be provided to consumers
   const contextValue = {
     API_URL,
