@@ -11,7 +11,7 @@ const CreateInvoice = () => {
   const [invoice, setInvoice] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const componentRef = useRef(null);  // initialize with null
+  const componentRef = useRef(null);
 
   useEffect(() => {
     const fetchInvoice = async () => {
@@ -38,19 +38,25 @@ const CreateInvoice = () => {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
 
-      const gstRate = Number(invoice?.amountDetails?.gstPercentage || 0);
-      const totalAmount = Number(invoice?.amountDetails?.totalAmount || 0);
-      const baseAmount = totalAmount / (1 + gstRate / 100);
-      const cgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
-      const sgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);      
+  // Use safe access for calculations
+  const gstRate = Number(invoice?.amountDetails?.gstPercentage || 0);
+  const totalAmount = Number(invoice?.amountDetails?.totalAmount || 0);
+  const baseAmount = totalAmount / (1 + gstRate / 100);
+  const cgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
+  const sgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
+
   const totalQty = invoice?.productDetails?.reduce(
     (acc, p) => acc + Number(p.quantity || 0),
     0
-  );
+  ) || 0;
+
+  const hasAnyDiscount =
+    invoice?.productDetails?.some(
+      (p) => parseFloat(p.discountPercentage || 0) > 0
+    ) || false;
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
-    contentRef: componentRef,                 // ← add this
     documentTitle: `Invoice-${invoice?.invoiceNumber || "Invoice"}`,
     removeAfterPrint: true,
     onAfterPrint: () => console.log("🖨️ Printed successfully"),
@@ -73,7 +79,6 @@ const CreateInvoice = () => {
       <div className="mb-4 text-right">
         <button
           className="no-print bg-blue-600 text-white px-4 py-2 rounded text-xs sm:text-sm"
-          disabled={!invoice}
           onClick={handlePrint}
         >
           🖨️ Print Invoice
@@ -87,12 +92,12 @@ const CreateInvoice = () => {
             <h1 className="text-base sm:text-xl text-blue-600 font-bold">
               T A X&nbsp;I N V O I C E
             </h1>
-            <span className="text-xs sm:text-base font-semibold bg-white text-gray-800 px-1">
+            <span className="text-xs sm:text-base font-semibold text-gray-800">
               ORIGINAL FOR RECIPIENT
             </span>
           </div>
 
-          {/* Top Info Grid */}
+          {/* Top Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 border-b-2 border-black">
             <div className="flex items-start gap-2 p-2">
               <img src="/icon.png" alt="Logo" className="w-20 h-16 object-contain" />
@@ -101,70 +106,85 @@ const CreateInvoice = () => {
                 <p className="text-gray-800">GSTIN: <strong>09FTJPS4577P1ZD</strong></p>
                 <p className="text-gray-800">87a, Bankati chak, Raiganj road, Near Chhoti Masjid, Gorakhpur</p>
                 <p className="text-gray-800">Gorakhpur, UTTAR PRADESH, 273001</p>
-                <p className="text-gray-800"><strong>Mobile:</strong> +91 7054284786, 9140427414</p>
+                <p className="text-gray-800"><strong>Mobile:</strong> +91 7054284786, 9140427414</p>
                 <p className="text-gray-800"><strong>Email:</strong> info@shineinfosolutions.in</p>
               </div>
             </div>
             <div className="grid grid-cols-2 border border-black text-xs sm:text-sm font-semibold text-gray-800">
-  {/* Invoice Number */}
-  <div className="border-r border-b border-black p-2">
-    <p>Invoice #:</p>
-    <p className="font-bold">{invoice.invoiceNumber}</p>
-  </div>
-
-  {/* Invoice Date */}
-  <div className="border-b border-black p-2">
-    <p>Invoice Date:</p>
-    <p className="font-bold">{invoice.invoiceDate.split("T")[0]}</p>
-  </div>
-
-  {/* Place of Supply */}
-  <div className="border-r border-black p-2">
-    <p>Place of Supply:</p>
-    <p className="font-bold">{invoice.customerAddress}</p>
-  </div>
-
-  {/* Due Date */}
-  <div className="p-2">
-    <p>Due Date:</p>
-    <p className="font-bold">{new Date(invoice.dueDate).toLocaleDateString()}</p>
-  </div>
-</div>
-
+              <div className="border-r border-b border-black p-2">
+                <p>Invoice #:</p>
+                <p className="font-bold">{invoice.invoiceNumber}</p>
+              </div>
+              <div className="border-b border-black p-2">
+                <p>Invoice Date:</p>
+                <p className="font-bold">{invoice.invoiceDate?.split("T")[0]}</p>
+              </div>
+              <div className="border-r border-black p-2">
+                <p>Place of Supply:</p>
+                <p className="font-bold">{invoice.customerAddress}</p>
+              </div>
+              <div className="p-2">
+                <p>Due Date:</p>
+                <p className="font-bold">{new Date(invoice.dueDate).toLocaleDateString()}</p>
+              </div>
+            </div>
           </div>
 
           {/* Customer Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2">
-            <div className=" border-black p-2 text-gray-800">
+            <div className="border-black p-2 text-gray-800">
               <p><strong>Customer Details:</strong></p>
               <p>GSTIN: {invoice.customerGST}</p>
               <p>Billing Address: {invoice.customerAddress}</p>
             </div>
           </div>
 
-          {/* Items Table */}
+          {/* Item Table */}
           <div className="overflow-x-auto">
             <table className="min-w-[600px] w-full border-2 border-black text-gray-800">
               <thead>
                 <tr>
-                  {["#", "Item", "HSN/ SAC", "Rate / Item", "Qty", "Taxable Value", "Tax Amount", "Amount"].map(h => (
-                    <th key={h} className="border px-2 py-1">{h}</th>
-                  ))}
+                  <th className="border px-2 py-1">#</th>
+                  <th className="border px-2 py-1">Item</th>
+                  <th className="border px-2 py-1">HSN/ SAC</th>
+                  <th className="border px-2 py-1">Rate / Item</th>
+                  <th className="border px-2 py-1">Qty</th>
+                  {hasAnyDiscount && <th className="border px-2 py-1">Discount Amount</th>}
+                  <th className="border px-2 py-1">Taxable Value</th>
+                  <th className="border px-2 py-1">Tax Amount</th>
+                  <th className="border px-2 py-1">Amount</th>
                 </tr>
               </thead>
               <tbody>
-                {invoice.productDetails.map((p, i) => (
-                  <tr key={i}>
-                    <td className="border px-2 py-1 text-center">{i+1}</td>
-                    <td className="border px-2 py-1">{p.description}</td>
-                    <td className="border px-2 py-1">{p.unit}</td>
-                    <td className="border px-2 py-1">₹{p.price}</td>
-                    <td className="border px-2 py-1">{p.quantity}</td>
-                    <td className="border px-2 py-1">₹{(p.price * p.quantity).toFixed(2)}</td>
-                    <td className="border px-2 py-1">₹{((p.price*p.quantity)*(invoice.amountDetails.gstPercentage/100)).toFixed(2)}</td>
-                    <td className="border px-2 py-1">₹{p.amount}</td>
-                  </tr>
-                ))}
+                {invoice.productDetails.map((p, i) => {
+                  const qty = parseFloat(p.quantity || 0);
+                  const price = parseFloat(p.price || 0);
+                  const discountPct = parseFloat(p.discountPercentage || 0);
+                  const taxRate = parseFloat(invoice.amountDetails?.gstPercentage || 0);
+
+                  const originalValue = qty * price;
+                  const discountAmount = (originalValue * discountPct) / 100;
+                  const taxableValue = originalValue - discountAmount;
+                  const taxAmount = taxableValue * (taxRate / 100);
+
+                  return (
+                    <tr key={i}>
+                      <td className="border px-2 py-1 text-center">{i + 1}</td>
+                      <td className="border px-2 py-1">{p.description}</td>
+                      <td className="border px-2 py-1">{p.unit}</td>
+                      <td className="border px-2 py-1">₹{price.toFixed(2)}</td>
+                      <td className="border px-2 py-1">{qty}</td>
+                      {hasAnyDiscount && (
+                        <td className="border px-2 py-1">
+                          {discountPct > 0 ? `₹${discountAmount.toFixed(2)}` : ""}
+                        </td>
+                      )}
+                      <td className="border px-2 py-1">₹{taxableValue.toFixed(2)}</td>
+                      <td className="border px-2 py-1">₹{taxAmount.toFixed(2)}</td>
+                      <td className="border px-2 py-1">₹{p.amount}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -173,21 +193,26 @@ const CreateInvoice = () => {
           <div className="p-2 text-xs font-bold text-gray-800">
             Total Items / Qty: {invoice.productDetails.length} / {totalQty}
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 border-t-2 border-black p-1 text-gray-800">
             <div />
             <div className="text-center">
-            <p><strong>Taxable Amount: ₹</strong> {baseAmount.toFixed(2)}</p>
-<p><strong>CGST {gstRate / 2}%: ₹</strong> {cgstAmount}</p>
-<p><strong>SGST {gstRate / 2}%: ₹</strong> {sgstAmount}</p>
+              <p><strong>Taxable Amount: ₹</strong> {baseAmount.toFixed(2)}</p>
+              <p><strong>CGST {gstRate / 2}%: ₹</strong> {cgstAmount}</p>
+              <p><strong>SGST {gstRate / 2}%: ₹</strong> {sgstAmount}</p>
             </div>
           </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 border-t-2 border-black text-gray-800">
             <div />
             <h2 className="font-bold p-2 text-right">TOTAL: ₹{totalAmount}</h2>
           </div>
+
           <div className="p-2 border-t-2 border-black text-right text-gray-800">
             <strong>Total amount (in words):</strong> INR {capitalizeWords(toWords(totalAmount))} only
           </div>
+
+          {/* Bank Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 border-t border-black text-gray-800">
             <div className="p-4">
               <p className="font-bold mb-1">Bank Details:</p>
