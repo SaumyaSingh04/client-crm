@@ -38,17 +38,13 @@ const CreateInvoice = () => {
       .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
       .join(" ");
 
-  // Use safe access for calculations
   const gstRate = Number(invoice?.amountDetails?.gstPercentage || 0);
   const totalAmount = Number(invoice?.amountDetails?.totalAmount || 0);
   const baseAmount = totalAmount / (1 + gstRate / 100);
   const cgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
   const sgstAmount = (baseAmount * (gstRate / 2 / 100)).toFixed(2);
-
-  const totalQty = invoice?.productDetails?.reduce(
-    (acc, p) => acc + Number(p.quantity || 0),
-    0
-  ) || 0;
+  const totalQty =
+    invoice?.productDetails?.reduce((acc, p) => acc + Number(p.quantity || 0), 0) || 0;
 
   const hasAnyDiscount =
     invoice?.productDetails?.some(
@@ -57,6 +53,7 @@ const CreateInvoice = () => {
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
+    contentRef: componentRef,                 // ← add this
     documentTitle: `Invoice-${invoice?.invoiceNumber || "Invoice"}`,
     removeAfterPrint: true,
     onAfterPrint: () => console.log("🖨️ Printed successfully"),
@@ -77,8 +74,9 @@ const CreateInvoice = () => {
   return (
     <div className="bg-white p-2 sm:p-6 md:p-10 text-xs sm:text-sm">
       <div className="mb-4 text-right">
-        <button
+      <button
           className="no-print bg-blue-600 text-white px-4 py-2 rounded text-xs sm:text-sm"
+          disabled={!invoice}
           onClick={handlePrint}
         >
           🖨️ Print Invoice
@@ -97,7 +95,7 @@ const CreateInvoice = () => {
             </span>
           </div>
 
-          {/* Top Info */}
+          {/* Company & Invoice Info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 border-b-2 border-black">
             <div className="flex items-start gap-2 p-2">
               <img src="/icon.png" alt="Logo" className="w-20 h-16 object-contain" />
@@ -139,7 +137,7 @@ const CreateInvoice = () => {
             </div>
           </div>
 
-          {/* Item Table */}
+          {/* Items Table */}
           <div className="overflow-x-auto">
             <table className="min-w-[600px] w-full border-2 border-black text-gray-800">
               <thead>
@@ -150,9 +148,8 @@ const CreateInvoice = () => {
                   <th className="border px-2 py-1">Rate / Item</th>
                   <th className="border px-2 py-1">Qty</th>
                   <th className="border px-2 py-1">Value</th>
-                  {hasAnyDiscount && <th className="border px-2 py-1">Discount Amount</th>}
-                  {/* <th className="border px-2 py-1">Taxable Value</th> */}
-                  {/* <th className="border px-2 py-1">Tax Amount</th> */}
+                  {hasAnyDiscount && <th className="border px-2 py-1">Discount</th>}
+                  {/* <th className="border px-2 py-1">Tax</th> */}
                   <th className="border px-2 py-1">Amount</th>
                 </tr>
               </thead>
@@ -161,12 +158,10 @@ const CreateInvoice = () => {
                   const qty = parseFloat(p.quantity || 0);
                   const price = parseFloat(p.price || 0);
                   const discountPct = parseFloat(p.discountPercentage || 0);
-                  const taxRate = parseFloat(invoice.amountDetails?.gstPercentage || 0);
-
                   const originalValue = qty * price;
                   const discountAmount = (originalValue * discountPct) / 100;
                   const taxableValue = originalValue - discountAmount;
-                  const taxAmount = taxableValue * (taxRate / 100);
+                  const taxAmount = taxableValue * (gstRate / 100);
 
                   return (
                     <tr key={i}>
@@ -175,13 +170,10 @@ const CreateInvoice = () => {
                       <td className="border px-2 py-1">{p.unit}</td>
                       <td className="border px-2 py-1">₹{price.toFixed(2)}</td>
                       <td className="border px-2 py-1">{qty}</td>
-                      <td className="border px-2 py-1">₹{originalValue.toFixed(2)}</td> 
+                      <td className="border px-2 py-1">₹{originalValue.toFixed(2)}</td>
                       {hasAnyDiscount && (
-                        <td className="border px-2 py-1">
-                          {discountPct > 0 ? `₹${discountAmount.toFixed(2)}` : ""}
-                        </td>
+                        <td className="border px-2 py-1">₹{discountAmount.toFixed(2)}</td>
                       )}
-                      {/* <td className="border px-2 py-1">₹{taxableValue.toFixed(2)}</td> */}
                       {/* <td className="border px-2 py-1">₹{taxAmount.toFixed(2)}</td> */}
                       <td className="border px-2 py-1">₹{p.amount}</td>
                     </tr>
