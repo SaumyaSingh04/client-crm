@@ -149,8 +149,9 @@ const CreateInvoice = () => {
                   <th className="border px-2 py-1">HSN/ SAC</th>
                   <th className="border px-2 py-1">Rate / Item</th>
                   <th className="border px-2 py-1">Qty</th>
+                  <th className="border px-2 py-1">Value</th>
                   {hasAnyDiscount && <th className="border px-2 py-1">Discount Amount</th>}
-                  <th className="border px-2 py-1">Taxable Value</th>
+                  {/* <th className="border px-2 py-1">Taxable Value</th> */}
                   <th className="border px-2 py-1">Tax Amount</th>
                   <th className="border px-2 py-1">Amount</th>
                 </tr>
@@ -174,12 +175,13 @@ const CreateInvoice = () => {
                       <td className="border px-2 py-1">{p.unit}</td>
                       <td className="border px-2 py-1">₹{price.toFixed(2)}</td>
                       <td className="border px-2 py-1">{qty}</td>
+                      <td className="border px-2 py-1">₹{originalValue.toFixed(2)}</td> 
                       {hasAnyDiscount && (
                         <td className="border px-2 py-1">
                           {discountPct > 0 ? `₹${discountAmount.toFixed(2)}` : ""}
                         </td>
                       )}
-                      <td className="border px-2 py-1">₹{taxableValue.toFixed(2)}</td>
+                      {/* <td className="border px-2 py-1">₹{taxableValue.toFixed(2)}</td> */}
                       <td className="border px-2 py-1">₹{taxAmount.toFixed(2)}</td>
                       <td className="border px-2 py-1">₹{p.amount}</td>
                     </tr>
