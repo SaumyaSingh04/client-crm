@@ -75,16 +75,16 @@ function Sidebar() {
                       • Contract Agreement
                     </Link>
                   </li>
-                  <li>
+                  {/* <li>
                     <Link to="/employee/term_conditions" className="block text-md text-orange-400 hover:text-white">
                       • Terms & Conditions
                     </Link>
-                  </li>
-                  <li>
+                  </li> */}
+                  {/* <li>
                     <Link to="/employee/policies" className="block text-md text-orange-400 hover:text-white">
                       • Policy Document
                     </Link>
-                  </li>
+                  </li> */}
                 </ul>
               )}
             </li>

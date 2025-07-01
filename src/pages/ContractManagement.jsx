@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import axios from "axios";
+import Loader from "../components/Loader";
 
 function ContractManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [contracts, setContracts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [showDropdown, setShowDropdown] = useState(false);
   const { navigate, API_URL } = useAppContext();
 
@@ -15,6 +17,8 @@ function ContractManagement() {
         setContracts(response.data.data || []);
       } catch (error) {
         console.error("Error fetching contracts:", error);
+      } finally {
+        setLoading(false); 
       }
     };
     fetchContracts();
@@ -49,7 +53,7 @@ function ContractManagement() {
     setShowDropdown(false);
     navigate(`/contracts/create/${id}`);
   };
-
+  if (loading) return <Loader message="Loading contracts..." />;
   return (
     <div className="p-6">
       <div className="flex flex-col md:flex-row items-center justify-between mb-6 gap-4">
@@ -159,7 +163,7 @@ function ContractManagement() {
                 ))}
               </tbody>
             </table>
-          </div>
+            </div>
         ) : (
           <div className="text-center py-6 text-gray-500">No contracts found.</div>
         )}

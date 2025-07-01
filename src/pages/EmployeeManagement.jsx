@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useAppContext } from "../context/AppContext";
 import axios from "axios";
 import { useLocation } from "react-router-dom";
+import Loader from "../components/Loader";
 
 function EmployeeManagement() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -55,7 +56,7 @@ function EmployeeManagement() {
     emp.contact2?.includes(searchTerm)
   );
 
-  if (loading) return <div className="p-6 flex justify-center">Loading employees...</div>;
+  if (loading) return <Loader message="Loading employees..." />;
   if (error) return <div className="p-6 text-red-600">{error}</div>;
 
   return (

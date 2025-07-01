@@ -3,14 +3,15 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import axios from "axios";
+import Loader from "../components/Loader"; 
 
 const InvoiceManagement = () => {
   const { API_URL } = useAppContext();
   const navigate = useNavigate();
   const [invoices, setInvoices] = useState([]);
   const [search, setSearch] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true); 
+  const [error, setError] = useState(null); 
 
   const fetchInvoices = async () => {
     try {
@@ -48,7 +49,7 @@ const InvoiceManagement = () => {
       inv.customerName?.toLowerCase().includes(search.toLowerCase()) ||
       inv.invoiceNumber?.toLowerCase().includes(search.toLowerCase())
   );
-
+  if (loading) return <Loader message="Loading invoices..." />;
   return (
     <div className="p-6 overflow-x-hidden">
       {/* Search + Add */}
@@ -74,6 +75,12 @@ const InvoiceManagement = () => {
           + New Invoice
         </button>
       </div>
+
+      {error && (
+        <div className="mb-4 p-4 text-red-700 bg-red-100 rounded">
+          {error}
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
