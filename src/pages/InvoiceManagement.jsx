@@ -17,7 +17,12 @@ const InvoiceManagement = () => {
     try {
       const res = await axios.get(`${API_URL}/api/invoices/all`);
       if (res.data?.success) {
-        setInvoices(res.data.data.reverse());
+        const sorted = (res.data.data || []).sort((a, b) => {
+          const aDate = new Date(a.created_at || parseInt(a._id.substring(0, 8), 16) * 1000);
+          const bDate = new Date(b.created_at || parseInt(b._id.substring(0, 8), 16) * 1000);
+          return bDate - aDate;
+        });
+        setInvoices(sorted);
       } else {
         throw new Error(res.data?.message || "Failed to load invoices");
       }
@@ -28,6 +33,7 @@ const InvoiceManagement = () => {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchInvoices();

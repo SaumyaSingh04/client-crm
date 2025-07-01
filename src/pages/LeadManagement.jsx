@@ -13,15 +13,22 @@ function LeadManagement() {
     const fetchLeads = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/leads`);
-        setLeads(response.data);
+        const sortedLeads = (response.data || []).sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB - dateA;
+        });
+        setLeads(sortedLeads);
       } catch (error) {
-        console.log(error);
+        console.error("Error fetching leads:", error);
       } finally {
         setLoading(false);
       }
     };
+  
     fetchLeads();
   }, [API_URL]);
+  
 
   const filteredLeads = leads.filter(
     (lead) =>

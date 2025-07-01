@@ -14,7 +14,10 @@ function ContractManagement() {
     const fetchContracts = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/employees`);
-        setContracts(response.data.data || []);
+        const sorted = (response.data.data || []).sort(
+          (a, b) => new Date(b.created_at || b._id.toString().substring(0, 8)) - new Date(a.created_at || a._id.toString().substring(0, 8))
+        );
+        setContracts(sorted);        
       } catch (error) {
         console.error("Error fetching contracts:", error);
       } finally {

@@ -16,7 +16,7 @@ function EmployeeManagement() {
 
   const { navigate, API_URL } = useAppContext();
   const location = useLocation();
-
+ 
   const fetchEmployees = async () => {
     try {
       setLoading(true);
@@ -24,7 +24,12 @@ function EmployeeManagement() {
       if (response.data?.success) {
         const data = response.data.data;
         const employeeArray = Array.isArray(data) ? data : data.employees || [];
-        setEmployees(employeeArray);
+  
+        // Sort employees by createdAt (latest first)
+        const sortedEmployees = employeeArray.sort(
+          (a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)
+        );         
+        setEmployees(sortedEmployees);
       } else {
         throw new Error(response.data?.message || "Failed to load employees");
       }
@@ -35,6 +40,7 @@ function EmployeeManagement() {
       setLoading(false);
     }
   };
+  
 
   useEffect(() => {
     fetchEmployees();

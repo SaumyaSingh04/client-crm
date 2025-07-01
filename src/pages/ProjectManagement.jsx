@@ -18,7 +18,12 @@ function ProjectManagement() {
     const fetchProjects = async () => {
       try {
         const response = await axios.get(`${API_URL}/api/projects`);
-        setProjects(response.data);
+        const sortedProjects = (response.data || []).sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0);
+          const dateB = new Date(b.createdAt || 0);
+          return dateB - dateA;
+        });
+        setProjects(sortedProjects);
         setLoading(false);
       } catch (err) {
         console.error("Error fetching projects:", err);
@@ -26,9 +31,10 @@ function ProjectManagement() {
         setLoading(false);
       }
     };
-
+  
     fetchProjects();
   }, []);
+  
 
   // Calculate progress based on start date, handover date, and current date
   const calculateProgress = (startDate, handOverDate, deadline) => {
