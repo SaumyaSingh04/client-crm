@@ -162,7 +162,7 @@ function ProjectManagement() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
       <div className="mb-4 flex flex-col gap-3">
   {/* Add Project Button at Top Right */}
-  <div className="flex justify-center">
+  <div className="flex justify-end">
     <button
       onClick={() => navigate("/projects/add")}
       className="bg-gray-800 text-white px-5 py-2 rounded-lg hover:bg-gray-700 transition"
