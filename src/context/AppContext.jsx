@@ -11,27 +11,26 @@ export function AppProvider({ children }) {
   // State variables for the admin dashboard
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [darkMode, setDarkMode] = useState(false);
+  const [darkMode, setDarkMode] = useState(() => {
+    const savedDark = localStorage.getItem("darkMode");
+    if (savedDark !== null) return savedDark === "true";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+  
   const navigate = useNavigate();
 
   // Check for saved user and theme on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem("user");
-    const savedDarkMode = localStorage.getItem("darkMode");
-
     if (savedUser) {
       try {
         setCurrentUser(JSON.parse(savedUser));
-      } catch (e) {
+      } catch {
         localStorage.removeItem("user");
       }
     }
-
-    if (savedDarkMode !== null) {
-      setDarkMode(savedDarkMode === "true");
-    }
   }, []);
-
+  
   // Apply or remove dark class on <html>
   useEffect(() => {
     if (darkMode) {
