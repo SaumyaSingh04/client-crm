@@ -160,46 +160,51 @@ function ProjectManagement() {
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <button
-              className={`mr-2 px-3 py-1 rounded-full text-sm font-medium ${
-                projectFilter === "all"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setProjectFilter("all")}
-            >
-              All Projects
-            </button>
-            <button
-              className={`mr-2 px-3 py-1 rounded-full text-sm font-medium ${
-                projectFilter === "active"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setProjectFilter("active")}
-            >
-              Active Projects
-            </button>
-            <button
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                projectFilter === "completed"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-              onClick={() => setProjectFilter("completed")}
-            >
-              Completed Projects
-            </button>{" "}
-          </div>
-          <button
-            onClick={() => navigate("/projects/add")}
-            className="bg-gray-800 border border-gray-400 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
-          >
-            Add New Project
-          </button>
-        </div>
+      <div className="mb-4 flex flex-col gap-3">
+  {/* Add Project Button at Top Right */}
+  <div className="flex justify-center">
+    <button
+      onClick={() => navigate("/projects/add")}
+      className="bg-gray-800 text-white px-5 py-2 rounded-lg hover:bg-gray-700 transition"
+    >
+      Add New Project
+    </button>
+  </div>
+
+  {/* Filter Buttons in One Line Below */}
+  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+    <button
+      className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+        projectFilter === "all"
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+      }`}
+      onClick={() => setProjectFilter("all")}
+    >
+      All Projects
+    </button>
+    <button
+      className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+        projectFilter === "active"
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+      }`}
+      onClick={() => setProjectFilter("active")}
+    >
+      Active Projects
+    </button>
+    <button
+      className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+        projectFilter === "completed"
+          ? "bg-blue-600 text-white"
+          : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+      }`}
+      onClick={() => setProjectFilter("completed")}
+    >
+      Completed Projects
+    </button>
+  </div>
+</div>
 
         {loading ? (
           <Loader message="Fetching projects..." />

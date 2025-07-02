@@ -193,7 +193,7 @@ const AddLead = () => {
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="w-full px-3 py-2 border bg-gray-800 rounded-md"
+              className="w-full px-3 py-2 border rounded-md"
             >
               <option value="New">New</option>
               <option value="Contacted">Contacted</option>
@@ -224,7 +224,7 @@ const AddLead = () => {
               name="followUpDate"
               value={formData.followUpDate}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md bg-gray-800"
+              className="w-full px-3 py-2 border rounded-md"
             />
           </div>
 
@@ -236,7 +236,7 @@ const AddLead = () => {
               name="followUpStatus"
               value={formData.followUpStatus}
               onChange={handleChange}
-              className="w-full px-3 py-2 border rounded-md bg-gray-800"
+              className="w-full px-3 py-2 border rounded-md"
             >
               <option value="Not Started">Not Started</option>
               <option value="Scheduled">Scheduled</option>
