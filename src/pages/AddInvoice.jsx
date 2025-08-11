@@ -9,6 +9,9 @@ const AddInvoice = () => {
   const { API_URL } = useAppContext();
   const navigate = useNavigate();
 
+  const [formErrors, setFormErrors] = useState({});
+  const [rowErrors, setRowErrors] = useState([]);
+
   const [formData, setFormData] = useState({
     customerGST: "",
     invoiceDate: "",
@@ -73,29 +76,19 @@ const AddInvoice = () => {
     fetchData();
   }, [id, API_URL]);
 
-  // ✅ Auto-calculate totalAmount when rows, gst or discount changes
   useEffect(() => {
-    // 1) sum all line amounts (includes line‑level discounts)
     const baseAmount = rows.reduce(
       (acc, item) => acc + parseFloat(item.amount || 0),
       0
     );
-
-    // 2) percentages from formData
     const gstPct = parseFloat(formData.amountDetails.gstPercentage || 0);
     const discPct = parseFloat(formData.amountDetails.discountOnTotal || 0);
-
-    // 3) apply global discount% to the base, then round to paise
     const discountedBase = parseFloat(
       (baseAmount * (1 - discPct / 100)).toFixed(2)
     );
-
-    // 4) compute GST amount on that discounted base, round to paise
     const gstAmount = parseFloat(
       (discountedBase * (gstPct / 100)).toFixed(2)
     );
-
-    // 5) total = discounted base + GST amount, rounded to paise
     const total = parseFloat((discountedBase + gstAmount).toFixed(2));
 
     setFormData((prev) => ({
@@ -149,7 +142,35 @@ const AddInvoice = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
+    const errors = {};
+    const rowErrs = [];
+  
+    const requiredFields = [
+      "customerName", "invoiceDate", "dueDate", "invoiceNumber",
+      "customerAddress", "customerPhone", "customerEmail", "customerGST"
+    ];
+    requiredFields.forEach((field) => {
+      if (!formData[field]?.trim()) errors[field] = true;
+    });
+  
+    let hasRowError = false;
+  
+    rows.forEach((row, i) => {
+      const rowError = {};
+      if (!row.description?.trim()) rowError.description = true;
+      if (!row.quantity || parseFloat(row.quantity) <= 0) rowError.quantity = true;
+      if (!row.price || parseFloat(row.price) <= 0) rowError.price = true;
+  
+      if (Object.keys(rowError).length > 0) hasRowError = true;
+      rowErrs.push(rowError);
+    });
+  
+    setFormErrors(errors);
+    setRowErrors(rowErrs);
+  
+    if (Object.keys(errors).length > 0 || hasRowError) return;
+  
     const payload = {
       ...formData,
       productDetails: rows,
@@ -158,7 +179,7 @@ const AddInvoice = () => {
         totalAmount: parseFloat(formData.amountDetails.totalAmount).toFixed(2),
       },
     };
-
+  
     try {
       if (id) {
         await axios.put(`${API_URL}/api/invoices/update/${id}`, payload);
@@ -171,6 +192,7 @@ const AddInvoice = () => {
       alert("Failed to save invoice.");
     }
   };
+  
 
   const gstRate = parseFloat(formData.amountDetails.gstPercentage || 0);
   const cgst = (gstRate / 2).toFixed(2);
@@ -180,18 +202,13 @@ const AddInvoice = () => {
   return (
     <div className="p-6">
       <div className="flex items-center mb-6">
-        <button
-          onClick={() => navigate("/invoices")}
-          className="mr-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700"
-        >
+        <button onClick={() => navigate("/invoices")} className="mr-4 p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
             viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h2 className="text-2xl font-bold">
-          {id ? "Update Invoice" : "Add New Invoice"}
-        </h2>
+        <h2 className="text-2xl font-bold">{id ? "Update Invoice" : "Add New Invoice"}</h2>
       </div>
 
       <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
@@ -209,16 +226,13 @@ const AddInvoice = () => {
             ["Customer Aadhar", "customerAadhar", "text"],
           ].map(([label, name, type]) => (
             <div key={name}>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                {label}
-              </label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{label}</label>
               <input
                 type={type}
                 name={name}
                 value={formData[name]}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                required
+                className={`w-full px-3 py-2 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white ${formErrors[name] ? "border-red-500" : ""}`}
               />
             </div>
           ))}
@@ -241,7 +255,8 @@ const AddInvoice = () => {
                     <input
                       type="text"
                       value={row.description}
-                      onChange={(e) => handleRowChange(i, "description", e.target.value)}                      className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                      onChange={(e) => handleRowChange(i, "description", e.target.value)}
+                      className={`w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white ${rowErrors[i]?.description ? "border-red-500" : ""}`}
                     />
                   </td>
                   <td className="border px-3 py-2">
@@ -260,7 +275,8 @@ const AddInvoice = () => {
                       <input
                         type="number"
                         value={row[field]}
-                        onChange={(e) => handleRowChange(i, field, e.target.value)}                        className="w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        onChange={(e) => handleRowChange(i, field, e.target.value)}
+                        className={`w-full px-2 py-1 border rounded-md dark:bg-gray-700 dark:border-gray-600 dark:text-white ${rowErrors[i]?.[field] ? "border-red-500" : ""}`}
                       />
                     </td>
                   ))}
